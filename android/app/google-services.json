@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "202482506460",
+    "firebase_url": "https://playspace-1db5b-default-rtdb.firebaseio.com",
+    "project_id": "playspace-1db5b",
+    "storage_bucket": "playspace-1db5b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202482506460:android:9e986a19677e830836f219",
+        "android_client_info": {
+          "package_name": "com.example.playspace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjnFtRIyUgk0vJv4ECEqe_Js70epwdK1E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
