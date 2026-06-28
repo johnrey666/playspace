@@ -1,0 +1,77 @@
+rules_version = '2';
+
+// PlaySpace security rules.
+// Every collection requires the caller to be signed in. The `users` collection
+// additionally restricts profile creation to the matching auth uid so people
+// can only create their own profile document during sign-up.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // User profiles. Anyone signed in can read profiles (needed for search,
+    // leaderboards, friend lists and the username-availability check). A user
+    // may only create the profile document whose id matches their own uid.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == userId;
+      // Updates are allowed for any signed-in user because friend-accept flows
+      // write to both participants' documents (friendIds arrays).
+      allow update: if signedIn();
+      allow delete: if false;
+    }
+
+    // Friend requests between users.
+    match /friendRequests/{requestId} {
+      allow read, create, update: if signedIn();
+      allow delete: if false;
+    }
+
+    // 24h stories.
+    match /stories/{storyId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn();
+    }
+
+    // Chats and their messages subcollection.
+    match /chats/{chatId} {
+      allow read, create, update: if signedIn();
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read, create, update: if signedIn();
+        allow delete: if false;
+      }
+    }
+
+    // 1v1 / lobby challenges.
+    match /challenges/{challengeId} {
+      allow read, create, update: if signedIn();
+      allow delete: if false;
+    }
+
+    // Social posts (status updates + shared game results) and their comments.
+    match /posts/{postId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn();
+
+      match /comments/{commentId} {
+        allow read, create: if signedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // Game results feed and their comments subcollection.
+    match /gameResults/{resultId} {
+      allow read, create, update: if signedIn();
+      allow delete: if false;
+
+      match /comments/{commentId} {
+        allow read, create: if signedIn();
+        allow update, delete: if false;
+      }
+    }
+  }
+}

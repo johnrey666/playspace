@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "matchmaking": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "matches": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "status": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "randomChat": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
