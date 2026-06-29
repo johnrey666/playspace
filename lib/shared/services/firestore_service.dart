@@ -201,10 +201,23 @@ class FirestoreService {
     required String toUid,
     required String text,
     String? storyHint,
+    String? storyPreviewUrl,
   }) async {
     final chat = await getOrCreatePmChat(fromUid, toUid);
-    final body = storyHint == null ? text : '$storyHint: $text';
-    await sendMessage(chat: chat, senderUid: fromUid, text: body);
+    // If we have a story image, attach it as a preview and keep the reply text
+    // clean. Otherwise (e.g. a text story) fall back to a prefixed hint so the
+    // recipient still has context.
+    if (storyPreviewUrl != null && storyPreviewUrl.isNotEmpty) {
+      await sendMessage(
+        chat: chat,
+        senderUid: fromUid,
+        text: text,
+        storyPreviewUrl: storyPreviewUrl,
+      );
+    } else {
+      final body = storyHint == null ? text : '$storyHint: $text';
+      await sendMessage(chat: chat, senderUid: fromUid, text: body);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -274,6 +287,7 @@ class FirestoreService {
     required String senderUid,
     required String text,
     String? imageUrl,
+    String? storyPreviewUrl,
   }) async {
     final batch = _db.batch();
     final msgRef = chats.doc(chat.id).collection('messages').doc();
@@ -282,13 +296,18 @@ class FirestoreService {
       senderUid: senderUid,
       text: text,
       imageUrl: imageUrl,
+      storyPreviewUrl: storyPreviewUrl,
       sentAt: DateTime.now(),
       readBy: [senderUid],
     ).toMap());
 
-    final preview = imageUrl != null && imageUrl.isNotEmpty
-        ? (text.isNotEmpty ? '📷 $text' : '📷 Photo')
-        : text;
+    final hasStoryPreview =
+        storyPreviewUrl != null && storyPreviewUrl.isNotEmpty;
+    final preview = hasStoryPreview
+        ? (text.isNotEmpty ? '↩️ $text' : '↩️ Replied to your story')
+        : (imageUrl != null && imageUrl.isNotEmpty
+            ? (text.isNotEmpty ? '📷 $text' : '📷 Photo')
+            : text);
     final unread = Map<String, int>.from(chat.unreadCounts);
     for (final m in chat.memberIds) {
       if (m != senderUid) unread[m] = (unread[m] ?? 0) + 1;

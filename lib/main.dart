@@ -12,6 +12,7 @@ import 'shared/providers/friends_provider.dart';
 import 'shared/providers/story_provider.dart';
 import 'shared/providers/user_provider.dart';
 import 'shared/services/auth_service.dart';
+import 'shared/services/call_service.dart';
 import 'shared/services/fcm_service.dart';
 import 'shared/services/firestore_service.dart';
 import 'shared/services/local_notification_service.dart';
@@ -34,6 +35,7 @@ class PlaySpaceApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = AuthService();
     final firestoreService = FirestoreService();
+    final callService = CallService();
     final storageService = StorageService();
     final realtimeDbService = RealtimeDbService();
     final matchmakingService = MatchmakingService();
@@ -46,6 +48,7 @@ class PlaySpaceApp extends StatelessWidget {
       providers: [
         Provider.value(value: authService),
         Provider.value(value: firestoreService),
+        Provider.value(value: callService),
         Provider.value(value: storageService),
         Provider.value(value: realtimeDbService),
         Provider.value(value: matchmakingService),

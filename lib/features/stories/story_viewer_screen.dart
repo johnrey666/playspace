@@ -125,12 +125,16 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     final fs = context.read<FirestoreService>();
     final messenger = ScaffoldMessenger.of(context);
     final toUid = _group.uid;
+    final story = _story;
+    final preview =
+        story.mediaType == StoryMediaType.image ? story.mediaUrl : null;
     try {
       await fs.sendStoryReply(
         fromUid: _myUid,
         toUid: toUid,
         text: text,
         storyHint: 'Replied to your story',
+        storyPreviewUrl: preview,
       );
       messenger.showSnackBar(SnackBar(
           content: Text('Sent $text'),

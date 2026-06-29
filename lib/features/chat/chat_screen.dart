@@ -3,14 +3,17 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../shared/models/call_model.dart';
 import '../../shared/models/chat_model.dart';
 import '../../shared/models/message_model.dart';
 import '../../shared/models/user_model.dart';
 import '../../shared/providers/auth_provider.dart';
+import '../../shared/providers/user_provider.dart';
 import '../../shared/services/firestore_service.dart';
 import '../../shared/utils/media.dart';
 import '../../shared/widgets/avatar_widget.dart';
 import '../../shared/widgets/error_state_widget.dart';
+import '../call/call_screen.dart';
 import 'group_info_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -28,6 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   late final String _myUid = context.read<AuthProvider>().uid!;
   late final FirestoreService _fs = context.read<FirestoreService>();
+  bool _startingCall = false;
 
   @override
   void initState() {
@@ -79,6 +83,40 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _startCall(CallType type) async {
+    final chat = _chat;
+    if (chat == null || chat.isGroupChat || _startingCall) return;
+    setState(() => _startingCall = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final me = context.read<UserProvider>().user;
+      final other = await _fs.getUser(chat.otherMemberId(_myUid));
+      if (!mounted) return;
+      if (me == null || other == null) {
+        messenger.showSnackBar(
+            const SnackBar(content: Text('Could not start the call.')));
+        return;
+      }
+      // Open the call screen immediately; it creates the call document itself,
+      // so the UI never just "does nothing" if the network is slow.
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => CallScreen(
+          isCaller: true,
+          type: type,
+          otherName: other.displayName,
+          otherPhoto: other.photoUrl,
+          me: me,
+          other: other,
+        ),
+      ));
+    } catch (_) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Could not start the call.')));
+    } finally {
+      if (mounted) setState(() => _startingCall = false);
+    }
+  }
+
   Future<ImageSource?> _pickSource() {
     return showModalBottomSheet<ImageSource>(
       context: context,
@@ -115,6 +153,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 ? const Text('Chat')
                 : _ChatTitle(chat: _chat!, myUid: _myUid),
             actions: [
+              if (_chat != null && !_chat!.isGroupChat) ...[
+                IconButton(
+                  icon: const Icon(Icons.call_rounded),
+                  tooltip: 'Voice call',
+                  onPressed:
+                      _startingCall ? null : () => _startCall(CallType.audio),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.videocam_rounded),
+                  tooltip: 'Video call',
+                  onPressed:
+                      _startingCall ? null : () => _startCall(CallType.video),
+                ),
+              ],
               if (_chat?.isGroupChat == true)
                 IconButton(
                   icon: const Icon(Icons.info_outline_rounded),
@@ -287,6 +339,58 @@ class _MessageBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            if (message.isStoryReply) ...[
+              GestureDetector(
+                onTap: () =>
+                    _openFullImage(context, message.storyPreviewUrl!),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 3,
+                          color: isMine ? Colors.white70 : scheme.primary,
+                        ),
+                        Container(
+                          color: (isMine ? Colors.white : scheme.onSurface)
+                              .withValues(alpha: 0.12),
+                          padding: const EdgeInsets.all(6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: SmartImage(
+                                  src: message.storyPreviewUrl,
+                                  width: 42,
+                                  height: 42,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Replied to story',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: (isMine
+                                          ? Colors.white
+                                          : scheme.onSurface)
+                                      .withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
             if (message.hasImage) ...[
               GestureDetector(
                 onTap: () => _openFullImage(context, message.imageUrl!),

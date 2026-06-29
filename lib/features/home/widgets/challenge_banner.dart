@@ -11,6 +11,7 @@ import '../../../shared/providers/friends_provider.dart';
 import '../../../shared/providers/user_provider.dart';
 import '../../../shared/services/firestore_service.dart';
 import '../../games/challenge_flow.dart';
+import '../../games/game_routes.dart';
 
 class ChallengeBanner extends StatefulWidget {
   const ChallengeBanner({super.key});
@@ -119,22 +120,27 @@ class _ChallengeBannerState extends State<ChallengeBanner> {
     setState(() => _accepting = true);
     final fs = context.read<FirestoreService>();
     final me = context.read<UserProvider>().user;
+    // Capture the navigator *before* awaiting: once we mark the challenge as
+    // accepted it leaves the pending-challenges stream, the banner collapses,
+    // and this builder's BuildContext unmounts. Holding the navigator lets the
+    // acceptor still jump into the game (previously they were left behind).
+    final navigator = Navigator.of(context, rootNavigator: true);
     final challenger = await fs.getUser(challenge.fromUid);
-    if (me == null || challenger == null || !context.mounted) {
+    if (me == null || challenger == null || !mounted) {
       if (mounted) setState(() => _accepting = false);
       return;
     }
     await fs.respondToChallenge(challenge.id, ChallengeStatus.accepted,
         matchId: challenge.id);
-    if (!context.mounted) return;
-    enterChallengeGame(
-      context,
-      game: game,
-      matchId: challenge.id,
-      players: challengePlayers(me, challenger),
-      myUid: me.uid,
-      replace: false,
-    );
+    if (!mounted) return;
+    navigator.push(MaterialPageRoute(
+      builder: (_) => buildGameScreen(
+        game: game,
+        matchId: challenge.id,
+        players: challengePlayers(me, challenger),
+        myUid: me.uid,
+      ),
+    ));
   }
 }
 

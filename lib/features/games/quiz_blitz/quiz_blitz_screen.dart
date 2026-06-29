@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -42,6 +43,7 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
 
   StreamSubscription? _scoreSub;
   StreamSubscription? _presenceSub;
+  StreamSubscription? _answeredSub;
   Timer? _ticker;
 
   int _round = 0;
@@ -52,6 +54,12 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
   bool _revealed = false;
   bool _finished = false;
   bool _opponentLeft = false;
+  bool _opponentAnswered = false;
+  // Guards so a given round is only advanced once even though both the local
+  // lock and the realtime listener can trigger it.
+  int _advancedForRound = -1;
+
+  bool get _isSolo => _opponent.uid == '__none__';
 
   @override
   void initState() {
@@ -65,6 +73,9 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
         if (opp is num && mounted) setState(() => _oppScore = opp.toInt());
       }
     });
+    // Round progression is gated on *both* players answering. Each player marks
+    // `answered/r{round}/{uid}` and we only move on once every player is in.
+    _answeredSub = _rtdb.onValue('$_base/answered').listen(_onAnswered);
     _presenceSub =
         _rtdb.presenceStream('quiz_blitz', widget.matchId).listen((event) {
       final value = event.snapshot.value;
@@ -100,6 +111,7 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
   void _startRound() {
     _selected = null;
     _revealed = false;
+    _opponentAnswered = false;
     _timeLeftMs = _roundMs;
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(milliseconds: 100), (t) {
@@ -127,6 +139,40 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
       _myScore += points;
     });
     _rtdb.set('$_base/scores/${widget.myUid}', _myScore);
+    // Announce that I've answered this round (non-numeric key so RTDB keeps it
+    // as a map rather than collapsing it into an array).
+    _rtdb.set('$_base/answered/r$_round/${widget.myUid}', true);
+    _maybeAdvance();
+  }
+
+  /// Reacts to either player marking themselves answered for the active round.
+  void _onAnswered(DatabaseEvent event) {
+    final value = event.snapshot.value;
+    if (value is! Map) return;
+    final roundData = value['r$_round'];
+    final answered = <String>{};
+    if (roundData is Map) {
+      roundData.forEach((k, v) {
+        if (v == true) answered.add(k.toString());
+      });
+    }
+    final oppAnswered = answered.contains(_opponent.uid);
+    if (mounted && oppAnswered != _opponentAnswered) {
+      setState(() => _opponentAnswered = oppAnswered);
+    } else {
+      _opponentAnswered = oppAnswered;
+    }
+    _maybeAdvance();
+  }
+
+  /// Advances to the next round (or finishes) only once *both* players have
+  /// locked their answer for the current round. Keeps the two clients on the
+  /// exact same question the whole game.
+  void _maybeAdvance() {
+    if (_advancedForRound == _round || !_revealed) return;
+    final bothAnswered = _isSolo || _opponentAnswered;
+    if (!bothAnswered) return;
+    _advancedForRound = _round;
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       if (_round < _rounds - 1) {
@@ -177,6 +223,7 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
     _ticker?.cancel();
     _scoreSub?.cancel();
     _presenceSub?.cancel();
+    _answeredSub?.cancel();
     _rtdb.leaveMatch('quiz_blitz', widget.matchId, widget.myUid);
     super.dispose();
   }
@@ -208,6 +255,25 @@ class _QuizBlitzScreenState extends State<QuizBlitzScreen> {
               ],
             ),
           ),
+          if (_revealed && !_isSolo && !_opponentAnswered)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('Waiting for ${_opponent.name} to answer…',
+                      style: TextStyle(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
           const SizedBox(height: 12),
           Expanded(
             child: Padding(

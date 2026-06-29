@@ -10,6 +10,7 @@ import '../features/profile/profile_screen.dart';
 import '../shared/providers/auth_provider.dart';
 import '../shared/providers/chat_provider.dart';
 import '../shared/widgets/app_notifications_listener.dart';
+import '../shared/widgets/call_listener.dart';
 import 'theme.dart';
 
 /// Gates the app behind auth state. Persists session automatically because
@@ -30,7 +31,10 @@ class RootGate extends StatelessWidget {
         if (uid == null) return const _SplashScreen();
         return AppNotificationsListener(
           uid: uid,
-          child: const MainShell(),
+          child: CallListener(
+            uid: uid,
+            child: const MainShell(),
+          ),
         );
     }
   }

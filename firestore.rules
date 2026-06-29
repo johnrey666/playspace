@@ -52,6 +52,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // 1:1 voice / video calls. The document is the WebRTC signaling channel and
+    // the candidate subcollections carry ICE candidates between the two peers.
+    match /calls/{callId} {
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn();
+
+      match /callerCandidates/{candidateId} {
+        allow read, create, update, delete: if signedIn();
+      }
+      match /calleeCandidates/{candidateId} {
+        allow read, create, update, delete: if signedIn();
+      }
+    }
+
     // Social posts (status updates + shared game results) and their comments.
     match /posts/{postId} {
       allow read, create, update: if signedIn();
