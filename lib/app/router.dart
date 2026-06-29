@@ -9,6 +9,7 @@ import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../shared/providers/auth_provider.dart';
 import '../shared/providers/chat_provider.dart';
+import '../shared/widgets/app_notifications_listener.dart';
 import 'theme.dart';
 
 /// Gates the app behind auth state. Persists session automatically because
@@ -25,7 +26,12 @@ class RootGate extends StatelessWidget {
       case AuthStatus.signedOut:
         return const SignInScreen();
       case AuthStatus.signedIn:
-        return const MainShell();
+        final uid = context.watch<AuthProvider>().uid;
+        if (uid == null) return const _SplashScreen();
+        return AppNotificationsListener(
+          uid: uid,
+          child: const MainShell(),
+        );
     }
   }
 }

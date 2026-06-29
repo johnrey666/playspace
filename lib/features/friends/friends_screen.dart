@@ -77,7 +77,7 @@ class FriendsScreen extends StatelessWidget {
                     leading: AvatarWidget(
                       photoUrl: f.photoUrl,
                       displayName: f.displayName,
-                      isOnline: f.isOnline,
+                      isOnline: f.isPresent,
                     ),
                     title: Text(f.displayName),
                     subtitle: Text('@${f.username}'),

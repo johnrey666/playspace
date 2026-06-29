@@ -246,7 +246,7 @@ class _ChatTile extends StatelessWidget {
         return tile(
           title: user?.displayName,
           photoUrl: user?.photoUrl,
-          online: user?.isOnline ?? false,
+          online: user?.isPresent ?? false,
         );
       },
     );

@@ -33,6 +33,21 @@ class UserModel {
     this.totalScore = 0,
   });
 
+  /// How long after the last heartbeat a user is still considered "online".
+  static const Duration presenceWindow = Duration(minutes: 2);
+
+  /// Real, trustworthy presence. The raw [isOnline] flag can get stuck `true`
+  /// if the app is killed without a clean sign-out (the on-disconnect handler
+  /// only touches Realtime Database, not Firestore). To avoid showing ghosts
+  /// as "online" forever, we also require a fresh [lastSeen] heartbeat, which
+  /// the [PresenceService] refreshes every minute while connected.
+  bool get isPresent {
+    if (!isOnline) return false;
+    final seen = lastSeen;
+    if (seen == null) return false;
+    return DateTime.now().difference(seen) < presenceWindow;
+  }
+
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] as String? ?? '',

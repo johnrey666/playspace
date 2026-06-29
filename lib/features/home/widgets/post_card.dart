@@ -47,7 +47,7 @@ class PostCard extends StatelessWidget {
                   photoUrl: author?.photoUrl,
                   displayName: author?.displayName ?? '',
                   size: 44,
-                  isOnline: author?.isOnline ?? false,
+                  isOnline: author?.isPresent ?? false,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

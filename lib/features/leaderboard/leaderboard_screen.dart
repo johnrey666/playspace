@@ -262,7 +262,7 @@ class _RankRow extends StatelessWidget {
                 photoUrl: user.photoUrl,
                 displayName: user.displayName,
                 size: 40,
-                isOnline: user.isOnline,
+                isOnline: user.isPresent,
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -67,6 +67,52 @@ class FirestoreService {
     return snap.docs.map(UserModel.fromDoc).toList();
   }
 
+  /// Broader people search that matches both `username` (stored lowercase) and
+  /// `displayName` prefixes, deduplicated. Powers the global home search.
+  Future<List<UserModel>> searchUsers(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return [];
+    final lower = q.toLowerCase();
+    final capitalized =
+        q.isEmpty ? q : q[0].toUpperCase() + q.substring(1).toLowerCase();
+
+    final results = <String, UserModel>{};
+
+    Future<void> runPrefix(String field, String term) async {
+      if (term.isEmpty) return;
+      final snap = await users
+          .where(field, isGreaterThanOrEqualTo: term)
+          .where(field, isLessThanOrEqualTo: '$term\uf8ff')
+          .limit(20)
+          .get();
+      for (final d in snap.docs) {
+        final u = UserModel.fromDoc(d);
+        results[u.uid] = u;
+      }
+    }
+
+    await runPrefix('username', lower);
+    // displayName is stored with original casing; try a couple of variants.
+    await runPrefix('displayName', q);
+    if (capitalized != q) await runPrefix('displayName', capitalized);
+
+    return results.values.toList();
+  }
+
+  /// Searches recent posts whose text contains [query] (case-insensitive).
+  /// Firestore lacks substring search, so we filter a recent window locally.
+  Future<List<PostModel>> searchPosts(String query) async {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return [];
+    final snap =
+        await posts.orderBy('createdAt', descending: true).limit(120).get();
+    return snap.docs
+        .map(PostModel.fromDoc)
+        .where((p) => p.text.toLowerCase().contains(q))
+        .take(30)
+        .toList();
+  }
+
   // ---------------------------------------------------------------------------
   // Friend requests
   // ---------------------------------------------------------------------------
@@ -144,6 +190,22 @@ class FirestoreService {
   Future<void> markStoryViewed(String storyId, String uid) => stories
       .doc(storyId)
       .update({'viewedBy': FieldValue.arrayUnion([uid])});
+
+  Future<void> deleteStory(String storyId) => stories.doc(storyId).delete();
+
+  /// A reply/reaction to someone's story is delivered as a direct message,
+  /// just like Instagram. [storyHint] is prepended so the recipient sees what
+  /// it's about (e.g. "Replied to your story").
+  Future<void> sendStoryReply({
+    required String fromUid,
+    required String toUid,
+    required String text,
+    String? storyHint,
+  }) async {
+    final chat = await getOrCreatePmChat(fromUid, toUid);
+    final body = storyHint == null ? text : '$storyHint: $text';
+    await sendMessage(chat: chat, senderUid: fromUid, text: body);
+  }
 
   // ---------------------------------------------------------------------------
   // Chats & messages

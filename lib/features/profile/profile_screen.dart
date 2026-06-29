@@ -167,7 +167,7 @@ class _Header extends StatelessWidget {
                 photoUrl: user.photoUrl,
                 displayName: user.displayName,
                 size: 96,
-                isOnline: user.isOnline,
+                isOnline: user.isPresent,
               ),
             ),
             const SizedBox(height: 12),
@@ -208,9 +208,9 @@ class _InfoChips extends StatelessWidget {
             DateFormat.yMMMd().format(user.birthday!)),
       _chip(
         context,
-        user.isOnline ? Icons.circle : Icons.circle_outlined,
-        user.isOnline ? 'Online' : 'Offline',
-        color: user.isOnline ? Colors.green : null,
+        user.isPresent ? Icons.circle : Icons.circle_outlined,
+        user.isPresent ? 'Online' : 'Offline',
+        color: user.isPresent ? Colors.green : null,
       ),
     ];
     return Wrap(

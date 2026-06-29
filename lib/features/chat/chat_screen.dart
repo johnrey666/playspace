@@ -221,7 +221,7 @@ class _ChatTitle extends StatelessWidget {
               photoUrl: user?.photoUrl,
               displayName: user?.displayName ?? '',
               size: 36,
-              isOnline: user?.isOnline ?? false,
+              isOnline: user?.isPresent ?? false,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -232,7 +232,7 @@ class _ChatTitle extends StatelessWidget {
                   Text(user?.displayName ?? 'Chat',
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 16)),
-                  if (user?.isOnline ?? false)
+                  if (user?.isPresent ?? false)
                     const Text('online',
                         style: TextStyle(fontSize: 11, color: Colors.green)),
                 ],

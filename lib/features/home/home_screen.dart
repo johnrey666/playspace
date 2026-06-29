@@ -7,6 +7,7 @@ import '../../shared/providers/user_provider.dart';
 import '../../shared/widgets/avatar_widget.dart';
 import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';
+import '../search/search_screen.dart';
 import 'widgets/challenge_banner.dart';
 import 'widgets/game_cards_row.dart';
 import 'widgets/post_composer.dart';
@@ -120,6 +121,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SliverToBoxAdapter(child: _HomeSearchBar()),
               const SliverToBoxAdapter(child: StoryRow()),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               const SliverToBoxAdapter(child: _SectionTitle('Games')),
@@ -138,6 +140,50 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+class _HomeSearchBar extends StatelessWidget {
+  const _HomeSearchBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+      child: Material(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => const SearchScreen(),
+          )),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search_rounded, color: colors.onSurfaceVariant),
+                const SizedBox(width: 10),
+                Text(
+                  'Search people, posts, games',
+                  style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title);
   final String title;
@@ -146,11 +192,24 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(title,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w800)),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 18,
+            decoration: BoxDecoration(
+              gradient: kBrandGradient,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(title,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800)),
+        ],
+      ),
     );
   }
 }

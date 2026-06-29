@@ -91,7 +91,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                       leading: AvatarWidget(
                         photoUrl: u.photoUrl,
                         displayName: u.displayName,
-                        isOnline: u.isOnline,
+                        isOnline: u.isPresent,
                       ),
                       title: Text(u.displayName),
                       subtitle: Text('@${u.username}'),

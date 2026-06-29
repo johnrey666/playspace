@@ -56,14 +56,22 @@ class AvatarWidget extends StatelessWidget {
     );
 
     if (ring != StoryRing.none) {
-      final ringColor = ring == StoryRing.unseen ? scheme.primary : scheme.outlineVariant;
+      final unseen = ring == StoryRing.unseen;
       avatar = Container(
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(2.6),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: ringColor, width: 2.4),
+          gradient: unseen ? kBrandGradient : null,
+          color: unseen ? null : scheme.outlineVariant,
         ),
-        child: avatar,
+        child: Container(
+          padding: const EdgeInsets.all(2.4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.surface,
+          ),
+          child: avatar,
+        ),
       );
     }
 

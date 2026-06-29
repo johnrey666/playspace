@@ -14,6 +14,7 @@ import 'shared/providers/user_provider.dart';
 import 'shared/services/auth_service.dart';
 import 'shared/services/fcm_service.dart';
 import 'shared/services/firestore_service.dart';
+import 'shared/services/local_notification_service.dart';
 import 'shared/services/matchmaking_service.dart';
 import 'shared/services/presence_service.dart';
 import 'shared/services/random_chat_service.dart';
@@ -39,6 +40,7 @@ class PlaySpaceApp extends StatelessWidget {
     final fcmService = FcmService();
     final presenceService = PresenceService();
     final randomChatService = RandomChatService();
+    final localNotificationService = LocalNotificationService();
 
     return MultiProvider(
       providers: [
@@ -50,6 +52,7 @@ class PlaySpaceApp extends StatelessWidget {
         Provider.value(value: fcmService),
         Provider.value(value: presenceService),
         Provider.value(value: randomChatService),
+        Provider.value(value: localNotificationService),
         ChangeNotifierProvider(create: (_) => ThemeController()),
         ChangeNotifierProvider(
           create: (_) =>

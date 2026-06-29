@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../app/theme.dart';
 import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/providers/story_provider.dart';
 import '../../../shared/providers/user_provider.dart';
@@ -53,7 +54,7 @@ class StoryRow extends StatelessWidget {
                   bottom: 0,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
+                      gradient: kBrandGradient,
                       shape: BoxShape.circle,
                       border: Border.all(
                           color: Theme.of(context).colorScheme.surface,

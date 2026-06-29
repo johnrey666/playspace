@@ -76,7 +76,7 @@ class GroupInfoScreen extends StatelessWidget {
                         leading: AvatarWidget(
                           photoUrl: m.photoUrl,
                           displayName: m.displayName,
-                          isOnline: m.isOnline,
+                          isOnline: m.isPresent,
                         ),
                         title: Text(m.displayName),
                         subtitle: Text(m.uid == chat.createdBy

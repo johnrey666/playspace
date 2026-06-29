@@ -108,7 +108,7 @@ class _GameLobbyScreenState extends State<GameLobbyScreen> {
                   leading: AvatarWidget(
                       photoUrl: f.photoUrl,
                       displayName: f.displayName,
-                      isOnline: f.isOnline),
+                      isOnline: f.isPresent),
                   title: Text(f.displayName),
                   subtitle: Text('@${f.username}'),
                   onTap: () => Navigator.pop(context, f),
